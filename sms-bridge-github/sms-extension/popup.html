@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+    body{width:340px;background:#fff;color:#1a1a1a;font-size:13px}
+    .tabs{display:flex;border-bottom:2px solid #e0e0e0;background:#f8f8f8}
+    .tab{flex:1;padding:10px 4px;text-align:center;cursor:pointer;font-size:12px;font-weight:500;color:#666;border:none;background:none}
+    .tab.active{color:#c0392b;border-bottom:2px solid #c0392b;margin-bottom:-2px;background:#fff}
+    .panel{display:none;padding:14px}
+    .panel.active{display:block}
+    .enc-badge{font-size:11px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .enc-badge button{font-size:10px;padding:2px 8px;cursor:pointer;border:1px solid #ccc;border-radius:12px;background:#f0f0f0}
+    label{font-size:12px;color:#666;display:block;margin-bottom:3px;margin-top:8px}
+    label:first-of-type{margin-top:0}
+    input,textarea{width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;outline:none}
+    input:focus,textarea:focus{border-color:#c0392b}
+    textarea{resize:vertical;min-height:70px;margin-bottom:10px}
+    .btn-primary{width:100%;padding:10px;background:#c0392b;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;margin-top:2px}
+    .btn-primary:disabled{background:#aaa;cursor:not-allowed}
+    #status{margin-top:8px;font-size:12px;text-align:center;min-height:16px}
+    .ok{color:#2d8a4e}.err{color:#c0392b}
+    .msg-list{max-height:320px;overflow-y:auto}
+    .msg-item{padding:10px 0;border-bottom:1px solid #f0f0f0}
+    .msg-item:last-child{border-bottom:none}
+    .msg-phone{font-weight:500;font-size:13px}
+    .msg-text{font-size:12px;color:#555;margin-top:2px;word-break:break-word}
+    .msg-meta{font-size:11px;color:#999;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+    .badge{font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500}
+    .badge-sent{background:#e8f5e9;color:#2e7d32}
+    .badge-pending{background:#fff3e0;color:#e65100}
+    .badge-failed{background:#ffebee;color:#c62828}
+    .badge-enc{background:#e3f2fd;color:#1565c0}
+    .empty{text-align:center;color:#999;padding:24px;font-size:13px}
+    .refresh-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .refresh-bar span{font-size:12px;color:#444;font-weight:500}
+    .refresh-bar button{font-size:11px;padding:3px 10px;cursor:pointer;border:1px solid #ddd;border-radius:12px;background:#f5f5f5}
+    .pair-intro{font-size:12px;color:#555;margin-bottom:12px;line-height:1.5}
+    .code-display{font-family:monospace;font-size:22px;font-weight:bold;text-align:center;letter-spacing:4px;color:#c0392b;padding:10px;background:#fdf0f0;border-radius:6px;margin:10px 0}
+    .pair-step{font-size:12px;color:#666;margin:4px 0;text-align:center}
+    .qr-wrap{display:flex;justify-content:center;align-items:center;margin:10px 0}
+    .qr-wrap img, .qr-wrap canvas, .qr-wrap table{display:block !important;margin:0 auto !important}
+    #pairStatus{margin-top:8px;font-size:12px;color:#666;text-align:center}
+    .server-display{font-size:11px;color:#888;background:#f5f5f5;padding:6px 10px;border-radius:6px;margin-bottom:10px;word-break:break-all}
+    .device-item{padding:8px 0;border-bottom:1px solid #f0f0f0}
+    .device-item:last-child{border-bottom:none}
+    details{margin-top:8px;border-top:1px solid #eee;padding-top:10px}
+    summary{font-size:12px;color:#888;cursor:pointer}
+    details input{margin-top:6px;margin-bottom:6px}
+    .header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #eee}
+    .header img{width:28px;height:28px;border-radius:4px}
+    .header span{font-size:14px;font-weight:600;color:#1a1a1a}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <img src="icon48.png" alt="SOS">
+  <span id="appTitle">SOS Messenger</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tabSend">📤 Send</button>
+  <button class="tab" id="tabHistory">📋 History</button>
+  <button class="tab" id="tabPair">🔗 Pair</button>
+</div>
+
+<!-- SEND -->
+<div id="tab-send" class="panel active">
+  <div class="enc-badge">
+    <span id="encStatus">Checking…</span>
+    <button id="refreshKey">↻</button>
+  </div>
+  <label>Phone number</label>
+  <input type="tel" id="phone" placeholder="+61412 345 678">
+  <label>Message</label>
+  <textarea id="message" placeholder="Type your message…"></textarea>
+  <button class="btn-primary" id="send">Send SMS 📱</button>
+  <div id="status"></div>
+  <details>
+    <summary>⚙ Settings</summary>
+    <label style="margin-top:8px">Server URL</label>
+    <input id="server" placeholder="https://your-server.com">
+    <label>API Key</label>
+    <input id="apikey" type="password" placeholder="your-api-key">
+    <button class="btn-primary" id="save" style="background:#555;margin-top:4px">Save settings</button>
+    <button class="btn-primary" id="resetDefaults" style="background:#888;margin-top:4px">Reset to defaults</button>
+  </details>
+</div>
+
+<!-- HISTORY -->
+<div id="tab-history" class="panel">
+  <div class="refresh-bar">
+    <span>Recent messages</span>
+    <button id="btnRefreshHistory">↻ Refresh</button>
+  </div>
+  <div class="msg-list" id="msgList">
+    <div class="empty">Click Refresh to load</div>
+  </div>
+</div>
+
+<!-- PAIR -->
+<div id="tab-pair" class="panel">
+  <p class="pair-intro">Generate a pairing code to link a new Android device. Each code expires in 15 minutes.</p>
+
+  <!-- Show current server URL so user knows what to enter on phone -->
+  <div class="server-display">🌐 Server: <span id="serverDisplay">not set</span></div>
+
+  <button class="btn-primary" id="btnGenCode">Generate Pairing Code</button>
+
+  <div id="qrSection" style="display:none">
+    <div class="code-display" id="pairCode">--------</div>
+    <div class="qr-wrap" id="qrCanvas"></div>
+    <p class="pair-step" style="margin-top:8px">1. Open SOS Messenger on Android</p>
+    <p class="pair-step">2. Go to Settings → Unlink & Re-pair</p>
+    <p class="pair-step">3. Enter the server URL and code above</p>
+  </div>
+  <div id="pairStatus"></div>
+
+  <div style="margin-top:16px;border-top:1px solid #eee;padding-top:12px">
+    <div class="refresh-bar">
+      <span>Linked devices</span>
+      <button id="btnRefreshDevices">↻ Refresh</button>
+    </div>
+    <div id="deviceList" style="font-size:12px;color:#666">Click ↻ to load</div>
+  </div>
+</div>
+
+<script src="qrcode.min.js"></script>
+<script src="config.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>
