@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/bg_chat">
+
+  <com.google.android.material.appbar.MaterialToolbar
+      android:id="@+id/toolbar"
+      android:layout_width="match_parent" android:layout_height="?attr/actionBarSize"
+      android:background="@color/bg_surface"
+      style="@style/Widget.MaterialComponents.Toolbar"/>
+
+  <androidx.recyclerview.widget.RecyclerView
+      android:id="@+id/recyclerBubbles"
+      android:layout_width="match_parent" android:layout_height="0dp"
+      android:layout_weight="1" android:paddingTop="8dp" android:paddingBottom="8dp"
+      android:clipToPadding="false"/>
+
+  <!-- Input bar -->
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:orientation="horizontal" android:padding="8dp"
+      android:background="@color/bg_surface" android:elevation="8dp"
+      android:gravity="center_vertical"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnNotes"
+        style="@style/Widget.Material3.Button.Icon"
+        android:layout_width="48dp" android:layout_height="48dp"
+        android:insetTop="0dp" android:insetBottom="0dp"
+        android:paddingStart="12dp"
+        android:layout_marginEnd="4dp"
+        app:icon="@drawable/ic_notes" app:iconSize="22dp"
+        app:iconGravity="textStart" app:iconPadding="0dp"
+        app:backgroundTint="@android:color/transparent"
+        app:iconTint="@color/text_secondary"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="1" android:hint="Message"
+        android:layout_marginEnd="8dp">
+      <com.google.android.material.textfield.TextInputEditText
+          android:id="@+id/etInput"
+          android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:inputType="textMultiLine|textCapSentences"
+          android:maxLines="5" android:imeOptions="actionSend"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSend"
+        style="@style/Widget.Material3.Button.Icon"
+        android:layout_width="48dp" android:layout_height="48dp"
+        android:insetTop="0dp" android:insetBottom="0dp"
+        android:paddingStart="12dp"
+        app:icon="@drawable/ic_send" app:iconSize="24dp"
+        app:iconGravity="textStart" app:iconPadding="0dp"/>
+  </LinearLayout>
+
+</LinearLayout>

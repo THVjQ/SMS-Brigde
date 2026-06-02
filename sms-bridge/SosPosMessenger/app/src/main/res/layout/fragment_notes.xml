@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/bg_primary">
+
+  <com.google.android.material.appbar.MaterialToolbar
+      android:id="@+id/toolbar"
+      android:layout_width="match_parent" android:layout_height="?attr/actionBarSize"
+      android:background="@color/bg_surface"
+      android:title="Notes" android:titleTextColor="@color/text_primary"
+      style="@style/Widget.MaterialComponents.Toolbar.Primary"/>
+
+  <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent" android:layout_height="match_parent">
+      <androidx.recyclerview.widget.RecyclerView
+          android:id="@+id/recyclerNotes"
+          android:layout_width="match_parent" android:layout_height="match_parent"
+          android:paddingTop="8dp" android:paddingBottom="80dp"
+          android:paddingHorizontal="12dp" android:clipToPadding="false"/>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <TextView android:id="@+id/tvEmpty"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="No notes yet\nTap + to create one"
+        android:textSize="16sp" android:textColor="@color/text_secondary"
+        android:gravity="center" android:visibility="gone"/>
+
+  </FrameLayout>
+</LinearLayout>

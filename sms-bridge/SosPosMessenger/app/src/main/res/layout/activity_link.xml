@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/bg_primary">
+
+  <LinearLayout
+      android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:orientation="vertical" android:padding="32dp"
+      android:gravity="center_horizontal">
+
+    <!-- Logo / icon -->
+    <ImageView android:layout_width="72dp" android:layout_height="72dp"
+        android:src="@drawable/ic_message" android:tint="@color/md_primary"
+        android:layout_marginTop="48dp"/>
+
+    <TextView android:text="SOS Messenger"
+        android:textSize="26sp" android:textStyle="bold" android:textColor="@color/text_primary"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"/>
+
+    <TextView android:text="Link this phone to your SOS POS account"
+        android:textSize="14sp" android:textColor="@color/text_secondary"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginTop="6dp" android:layout_marginBottom="40dp"
+        android:gravity="center" android:textAlignment="center"/>
+
+    <!-- Device ID card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        app:cardCornerRadius="12dp" app:cardElevation="0dp"
+        app:strokeColor="@color/md_primary" app:strokeWidth="1dp"
+        android:layout_marginBottom="28dp"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:orientation="vertical" android:padding="16dp">
+        <TextView android:text="Your Device ID" android:textSize="11sp"
+            android:textColor="@color/md_primary" android:textStyle="bold"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <TextView android:id="@+id/tvDeviceId" android:textSize="12sp"
+            android:fontFamily="monospace" android:textColor="@color/text_primary"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"/>
+        <TextView android:text="Enter this on the website to generate a pairing code"
+            android:textSize="11sp" android:textColor="@color/text_secondary"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"/>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="Server URL (e.g. https://app.sospos.com.au)"
+        android:layout_marginBottom="16dp"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+      <com.google.android.material.textfield.TextInputEditText
+          android:id="@+id/etServer"
+          android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:inputType="textUri" android:imeOptions="actionNext"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="Pairing code (from website)"
+        android:layout_marginBottom="24dp"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+      <com.google.android.material.textfield.TextInputEditText
+          android:id="@+id/etCode"
+          android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:inputType="textPassword" android:imeOptions="actionDone"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnLink"
+        style="@style/Widget.Material3.Button"
+        android:layout_width="match_parent" android:layout_height="56dp"
+        android:text="Link Phone" android:textSize="16sp"/>
+
+    <ProgressBar android:id="@+id/progress"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" android:visibility="gone"/>
+
+    <TextView android:id="@+id/tvStatus"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:textSize="14sp" android:textColor="@color/text_secondary"
+        android:layout_marginTop="12dp" android:gravity="center"/>
+
+    <TextView android:id="@+id/tvSkip"
+        android:text="Use without linking →"
+        android:textSize="13sp" android:textColor="@color/md_primary"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_marginTop="32dp" android:padding="8dp"/>
+
+  </LinearLayout>
+</ScrollView>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- ── SOS Brand colours ─────────────────────────────────── -->
+  <color name="sos_red">#C0392B</color>
+  <color name="sos_red_dark">#922B21</color>
+  <color name="sos_red_light">#E74C3C</color>
+  <color name="sos_black">#1A1A1A</color>
+  <color name="sos_black_pure">#000000</color>
+
+  <!-- ── Primary ───────────────────────────────────────────── -->
+  <color name="md_primary">#C0392B</color>
+  <color name="md_primary_dark">#922B21</color>
+  <color name="md_secondary">#E74C3C</color>
+
+  <!-- ── Backgrounds ───────────────────────────────────────── -->
+  <color name="bg_primary">#121212</color>
+  <color name="bg_surface">#1E1E1E</color>
+  <color name="bg_surface_2">#2A2A2A</color>
+  <color name="bg_chat">#0D0D0D</color>
+
+  <!-- ── Text ──────────────────────────────────────────────── -->
+  <color name="text_primary">#FFFFFF</color>
+  <color name="text_secondary">#AAAAAA</color>
+  <color name="divider">#2E2E2E</color>
+
+  <!-- ── Chat bubbles ──────────────────────────────────────── -->
+  <color name="bubble_incoming">#2A2A2A</color>
+  <color name="bubble_outgoing">#C0392B</color>
+
+  <!-- ── Avatar colours ────────────────────────────────────── -->
+  <color name="avatar_1">#C0392B</color>
+  <color name="avatar_2">#922B21</color>
+  <color name="avatar_3">#E74C3C</color>
+  <color name="avatar_4">#A93226</color>
+  <color name="avatar_5">#CB4335</color>
+  <color name="avatar_6">#7B241C</color>
+</resources>

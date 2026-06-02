@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/bg_primary">
+
+  <com.google.android.material.appbar.MaterialToolbar
+      android:layout_width="match_parent" android:layout_height="?attr/actionBarSize"
+      android:background="@color/bg_surface"
+      android:title="Settings" android:titleTextColor="@color/text_primary"/>
+
+  <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:orientation="vertical" android:padding="20dp">
+
+    <!-- Connection -->
+    <TextView android:text="CONNECTION" android:textSize="11sp" android:textStyle="bold"
+        android:textColor="@color/md_primary" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:layout_marginBottom="8dp"
+        android:letterSpacing="0.1"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="Server URL" android:layout_marginBottom="12dp">
+      <com.google.android.material.textfield.TextInputEditText
+          android:id="@+id/etServer"
+          android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:inputType="textUri"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSave"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Save Settings" android:layout_marginBottom="8dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPing"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Test Connection" android:layout_marginBottom="8dp"/>
+
+    <TextView android:id="@+id/tvStatus"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:textSize="13sp" android:textColor="@color/text_secondary"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- Device -->
+    <TextView android:text="DEVICE" android:textSize="11sp" android:textStyle="bold"
+        android:textColor="@color/md_primary" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:layout_marginBottom="8dp"
+        android:letterSpacing="0.1"/>
+
+    <TextView android:id="@+id/tvDeviceId"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:textSize="12sp" android:fontFamily="monospace"
+        android:textColor="@color/text_secondary" android:layout_marginBottom="16dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSetDefault"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Set as Default SMS App" android:layout_marginBottom="24dp"/>
+
+    <!-- Preferences -->
+    <TextView android:text="PREFERENCES" android:textSize="11sp" android:textStyle="bold"
+        android:textColor="@color/md_primary" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:layout_marginBottom="12dp"
+        android:letterSpacing="0.1"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:layout_marginBottom="12dp">
+      <TextView android:text="Forward incoming SMS to website"
+          android:layout_width="0dp" android:layout_height="wrap_content"
+          android:layout_weight="1" android:textSize="14sp" android:textColor="@color/text_primary"/>
+      <com.google.android.material.switchmaterial.SwitchMaterial
+          android:id="@+id/swForwardIncoming" android:layout_width="wrap_content"
+          android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical"
+        android:layout_marginBottom="32dp">
+      <TextView android:text="Notify on incoming messages"
+          android:layout_width="0dp" android:layout_height="wrap_content"
+          android:layout_weight="1" android:textSize="14sp" android:textColor="@color/text_primary"/>
+      <com.google.android.material.switchmaterial.SwitchMaterial
+          android:id="@+id/swNotifyIncoming" android:layout_width="wrap_content"
+          android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnUnlink"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Unlink &amp; Re-pair"/>
+
+  </LinearLayout>
+  </ScrollView>
+</LinearLayout>

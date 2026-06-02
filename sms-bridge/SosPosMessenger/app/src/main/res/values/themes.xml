@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="Theme.SosPosMessenger" parent="Theme.Material3.Dark.NoActionBar">
+    <!-- Brand colours -->
+    <item name="colorPrimary">@color/sos_red</item>
+    <item name="colorPrimaryVariant">@color/sos_red_dark</item>
+    <item name="colorSecondary">@color/sos_red_light</item>
+    <item name="colorOnPrimary">@color/text_primary</item>
+
+    <!-- Backgrounds -->
+    <item name="android:windowBackground">@color/bg_primary</item>
+    <item name="android:colorBackground">@color/bg_primary</item>
+    <item name="colorSurface">@color/bg_surface</item>
+    <item name="colorOnSurface">@color/text_primary</item>
+    <item name="colorOnBackground">@color/text_primary</item>
+
+    <!-- Status and nav bars — black -->
+    <item name="android:statusBarColor">@color/sos_black_pure</item>
+    <item name="android:navigationBarColor">@color/sos_black_pure</item>
+    <item name="android:windowLightStatusBar">false</item>
+    <item name="android:windowLightNavigationBar">false</item>
+
+    <!-- Material components -->
+    <item name="materialButtonStyle">@style/Widget.SOS.Button</item>
+    <item name="bottomNavigationStyle">@style/Widget.SOS.BottomNav</item>
+  </style>
+
+  <!-- Red filled button -->
+  <style name="Widget.SOS.Button" parent="Widget.Material3.Button">
+    <item name="backgroundTint">@color/sos_red</item>
+    <item name="android:textColor">@color/text_primary</item>
+  </style>
+
+  <!-- Dark bottom nav with red selected state -->
+  <style name="Widget.SOS.BottomNav" parent="Widget.Material3.BottomNavigationView">
+    <item name="android:background">@color/sos_black_pure</item>
+    <item name="itemIconTint">@color/nav_icon_selector</item>
+    <item name="itemTextColor">@color/nav_icon_selector</item>
+    <item name="itemRippleColor">@color/sos_red</item>
+  </style>
+</resources>

@@ -20,5 +20,5 @@ object Prefs {
     var pollIntervalSeconds: Int get() = prefs.getInt("poll_interval",5); set(v){prefs.edit().putInt("poll_interval",v).apply()}
     var forwardIncoming: Boolean get() = prefs.getBoolean("forward_incoming",true); set(v){prefs.edit().putBoolean("forward_incoming",v).apply()}
     var notifyIncoming: Boolean get() = prefs.getBoolean("notify_incoming",true); set(v){prefs.edit().putBoolean("notify_incoming",v).apply()}
-    fun init(ctx: android.content.Context) { /* no-op */ }
+    fun init(ctx: android.content.Context) { }
 }

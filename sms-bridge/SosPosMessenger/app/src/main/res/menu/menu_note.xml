@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+  <item android:id="@+id/action_pin"    android:title="Pin"    app:showAsAction="ifRoom"
+      android:icon="@drawable/ic_pin_outline"/>
+  <item android:id="@+id/action_color"  android:title="Colour" app:showAsAction="never"/>
+  <item android:id="@+id/action_delete" android:title="Delete" app:showAsAction="never"/>
+</menu>
