@@ -58,7 +58,7 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSetDefault"
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:text="Set as Default SMS App" android:layout_marginBottom="24dp"/>
+        android:text="App Permissions &amp; Settings" android:layout_marginBottom="24dp"/>
 
     <!-- Preferences -->
     <TextView android:text="PREFERENCES" android:textSize="11sp" android:textStyle="bold"

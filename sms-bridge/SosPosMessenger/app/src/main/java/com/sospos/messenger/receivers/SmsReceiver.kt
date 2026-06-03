@@ -15,40 +15,44 @@ import com.sospos.messenger.db.Prefs
 import com.sospos.messenger.db.SmsHelper
 import com.sospos.messenger.ui.messages.ConversationActivity
 
-class SmsReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Telephony.Sms.Intents.SMS_DELIVER_ACTION) return
-        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
-        val grouped = mutableMapOf<String, StringBuilder>()
-        for (msg in messages) grouped.getOrPut(msg.originatingAddress ?: "") { StringBuilder() }.append(msg.messageBody)
-        for ((sender, body) in grouped) handle(context, sender, body.toString())
-    }
-
-    private fun handle(ctx: Context, sender: String, body: String) {
+private object SmsHandler {
+    fun handle(ctx: Context, sender: String, body: String) {
         Thread {
             AppDatabase.get(ctx).writableDatabase.execSQL(
                 "INSERT INTO incoming_log (sender, message) VALUES (?, ?)", arrayOf(sender, body)
             )
         }.start()
         if (Prefs.notifyIncoming) showNotification(ctx, sender, body)
-        if (Prefs.forwardIncoming && Prefs.isLinked) {
-            // forwardIncoming now encrypts automatically with server's public key
-            ApiClient.forwardIncoming(ctx, sender, body)
-        }
+        if (Prefs.forwardIncoming && Prefs.isLinked) ApiClient.forwardIncoming(ctx, sender, body)
     }
 
     private fun showNotification(ctx: Context, sender: String, body: String) {
         val name = SmsHelper.getContactName(ctx, sender)
-        val pi = PendingIntent.getActivity(ctx, sender.hashCode(),
+        val pi = PendingIntent.getActivity(
+            ctx, sender.hashCode(),
             Intent(ctx, ConversationActivity::class.java).apply {
-                putExtra("address", sender); putExtra("contact_name", name)
+                putExtra("address", sender)
+                putExtra("contact_name", name)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         NotificationCompat.Builder(ctx, App.CH_MESSAGES)
             .setContentTitle(name).setContentText(body)
             .setSmallIcon(R.drawable.ic_message).setAutoCancel(true)
             .setContentIntent(pi).setPriority(NotificationCompat.PRIORITY_HIGH)
-            .build().also { ctx.getSystemService(NotificationManager::class.java).notify(sender.hashCode(), it) }
+            .build()
+            .also { ctx.getSystemService(NotificationManager::class.java).notify(sender.hashCode(), it) }
+    }
+}
+
+class SmsReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != Telephony.Sms.Intents.SMS_DELIVER_ACTION) return
+        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
+        val grouped = mutableMapOf<String, StringBuilder>()
+        for (msg in messages) grouped.getOrPut(msg.originatingAddress ?: "") { StringBuilder() }.append(msg.messageBody)
+        for ((sender, body) in grouped) SmsHandler.handle(context, sender, body.toString())
     }
 }
 
@@ -58,9 +62,7 @@ class SmsReceiverFallback : BroadcastReceiver() {
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
         val grouped = mutableMapOf<String, StringBuilder>()
         for (msg in messages) grouped.getOrPut(msg.originatingAddress ?: "") { StringBuilder() }.append(msg.messageBody)
-        for ((sender, body) in grouped) {
-            if (Prefs.forwardIncoming && Prefs.isLinked) ApiClient.forwardIncoming(ctx, sender, body.toString())
-        }
+        for ((sender, body) in grouped) SmsHandler.handle(ctx, sender, body.toString())
     }
 }
 

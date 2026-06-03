@@ -1,10 +1,7 @@
 package com.sospos.messenger
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
-import android.provider.Telephony
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -50,31 +47,11 @@ class MainActivity : AppCompatActivity() {
 
         // Start background polling service
         ContextCompat.startForegroundService(this, Intent(this, SmsPollingService::class.java))
-
-        // Nudge user to set as default SMS app
-        val defaultSmsApp = Telephony.Sms.getDefaultSmsPackage(this)
-        if (defaultSmsApp != packageName) {
-            showDefaultSmsPrompt()
-        }
     }
 
     private fun loadFragment(f: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, f)
             .commit()
-    }
-
-    private fun showDefaultSmsPrompt() {
-        AlertDialog.Builder(this)
-            .setTitle("Set as Default SMS App")
-            .setMessage(
-                "SOS Messenger needs to be your default SMS app to send messages.\n\n" +
-                "Tap Open Settings, then choose SOS Messenger under SMS app."
-            )
-            .setPositiveButton("Open Settings") { _, _ ->
-                startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
-            }
-            .setNegativeButton("Not Now", null)
-            .show()
     }
 }

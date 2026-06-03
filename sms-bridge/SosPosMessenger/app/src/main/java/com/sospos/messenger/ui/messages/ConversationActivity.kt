@@ -2,7 +2,11 @@ package com.sospos.messenger.ui.messages
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.database.ContentObserver
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.Telephony
 import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.core.app.ActivityCompat
@@ -24,6 +28,10 @@ class ConversationActivity : AppCompatActivity() {
     private lateinit var btnSend:  MaterialButton
     private lateinit var btnNotes: MaterialButton
     private lateinit var address:  String
+
+    private val smsObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) { loadMessages() }
+    }
 
     companion object {
         private const val REQ_SEND_SMS = 101
@@ -63,7 +71,13 @@ class ConversationActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        contentResolver.registerContentObserver(Telephony.Sms.CONTENT_URI, true, smsObserver)
         loadMessages()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        contentResolver.unregisterContentObserver(smsObserver)
     }
 
     private fun sendMessage() {

@@ -4,7 +4,11 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.database.ContentObserver
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.Telephony
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.*
@@ -24,6 +28,10 @@ class MessagesFragment : Fragment() {
     private lateinit var swipe: SwipeRefreshLayout
     private lateinit var adapter: ConversationAdapter
     private var allConversations = listOf<Conversation>()
+
+    private val smsObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) { loadConversations() }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, b: Bundle?): View =
         inflater.inflate(R.layout.fragment_messages, container, false)
@@ -61,7 +69,13 @@ class MessagesFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        requireContext().contentResolver.registerContentObserver(Telephony.Sms.CONTENT_URI, true, smsObserver)
         loadConversations()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        requireContext().contentResolver.unregisterContentObserver(smsObserver)
     }
 
     private fun loadConversations() {
