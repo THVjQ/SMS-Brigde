@@ -85,5 +85,4 @@ cd SosPosMessenger
 ---
 
 ## License
-
 MIT
