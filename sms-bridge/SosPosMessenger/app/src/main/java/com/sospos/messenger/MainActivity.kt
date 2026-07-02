@@ -1,8 +1,11 @@
 package com.sospos.messenger
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -45,13 +48,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Start background polling service
+        startPollingServiceIfPermitted()
+    }
+
+    // Android 13+ requires POST_NOTIFICATIONS to be granted before startForeground()
+    // will accept a notification — calling it unconditionally crashes the app with
+    // an uncatchable CannotPostForegroundServiceNotificationException.
+    private fun startPollingServiceIfPermitted() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIFICATIONS)
+            return
+        }
         ContextCompat.startForegroundService(this, Intent(this, SmsPollingService::class.java))
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_NOTIFICATIONS && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.startForegroundService(this, Intent(this, SmsPollingService::class.java))
+        }
     }
 
     private fun loadFragment(f: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, f)
             .commit()
+    }
+
+    companion object {
+        private const val REQ_NOTIFICATIONS = 200
     }
 }

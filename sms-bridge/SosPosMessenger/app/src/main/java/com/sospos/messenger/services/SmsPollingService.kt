@@ -2,6 +2,8 @@ package com.sospos.messenger.services
 
 import android.app.*
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.sospos.messenger.App
@@ -20,7 +22,15 @@ class SmsPollingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startForeground(NOTIF_ID, buildNotification())
+        // Explicitly pass the FGS type — matches the manifest's dataSync
+        // declaration. Relying on the 2-arg overload to infer it has been
+        // unreliable on some OEM builds and throws an uncatchable
+        // CannotPostForegroundServiceNotificationException.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIF_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            startForeground(NOTIF_ID, buildNotification())
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -36,7 +46,7 @@ class SmsPollingService : Service() {
         ApiClient.getPending(applicationContext) { messages ->
             for (msg in messages) {
                 try {
-                    SmsHelper.send(applicationContext, msg.phone, msg.message)
+                    SmsHelper.sendSms(applicationContext, msg.phone, msg.message)
                     ApiClient.markSent(msg.id)
                 } catch (e: Exception) {
                     e.printStackTrace()

@@ -13,7 +13,11 @@ object ApiClient {
     private val client = OkHttpClient()
     private val JSON   = "application/json; charset=utf-8".toMediaType()
 
-    private fun server() = Prefs.serverUrl.trimEnd('/')
+    private fun server(): String {
+        val raw = Prefs.serverUrl.trim().trimEnd('/')
+        return if (raw.isEmpty() || raw.startsWith("http://") || raw.startsWith("https://")) raw
+               else "https://$raw"
+    }
     private fun key()    = Prefs.apiKey
     private fun deviceId() = Prefs.deviceId
 
@@ -25,9 +29,9 @@ object ApiClient {
     // ── Key exchange ──────────────────────────────────────────────────────────
 
     fun fetchServerKey(ctx: Context, callback: (Boolean) -> Unit) {
-        val r = Request.Builder()
-            .url("${server()}/api/tools/sms-bridge/pubkey")
-            .build()
+        val r = runCatching {
+            Request.Builder().url("${server()}/api/tools/sms-bridge/pubkey").build()
+        }.getOrElse { callback(false); return }
         client.newCall(r).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = callback(false)
             override fun onResponse(call: Call, response: Response) {
@@ -59,7 +63,8 @@ object ApiClient {
             .put("public_key",   devicePubKey)
             .toString().toRequestBody(JSON)
 
-        val r = req("/link").post(body).build()
+        val r = runCatching { req("/link").post(body).build() }
+            .getOrElse { callback(false, "Invalid server URL"); return }
         client.newCall(r).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = callback(false, e.message ?: "Network error")
             override fun onResponse(call: Call, response: Response) {
@@ -82,7 +87,7 @@ object ApiClient {
     // ── Outbound SMS ──────────────────────────────────────────────────────────
 
     fun getPending(ctx: Context, callback: (List<PendingMessage>) -> Unit) {
-        val r = req("/pending").get().build()
+        val r = runCatching { req("/pending").get().build() }.getOrElse { callback(emptyList()); return }
         client.newCall(r).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = callback(emptyList())
             override fun onResponse(call: Call, response: Response) {
@@ -148,7 +153,9 @@ object ApiClient {
     // ── Health ────────────────────────────────────────────────────────────────
 
     fun ping(callback: (Boolean) -> Unit) {
-        val r = Request.Builder().url("${server()}/health").build()
+        val r = runCatching {
+            Request.Builder().url("${server()}/health").build()
+        }.getOrElse { callback(false); return }
         client.newCall(r).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = callback(false)
             override fun onResponse(call: Call, response: Response) { response.close(); callback(response.isSuccessful) }
