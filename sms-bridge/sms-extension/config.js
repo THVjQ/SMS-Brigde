@@ -6,11 +6,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SOS_CONFIG = {
-  // Your server URL — change this when you move to app.sospos.com.au
-  serverUrl: 'https://scrambled-linoleum-magician.ngrok-free.dev',
+  // Your server URL — routed through the Cloudflare Tunnel to the TrueNAS box
+  serverUrl: 'https://sosmessenger.thvjq.com.au',
 
-  // Your API key — matches API_KEY in your server .env file
-  apiKey: '46f2328372a2f7c5dd094a0948ac1f55a59e8ec53061904c72f0b72288bb9c0b',
+  // Your API key — matches API_KEY in your server .env/compose file.
+  // The previous key committed here was public — rotate it on the server,
+  // then fill in the new key here locally. Do not commit a real key to
+  // this repo.
+  apiKey: '',
 
   // App name shown in the popup
   appName: 'SOS Messenger',

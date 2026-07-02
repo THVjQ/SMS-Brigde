@@ -1,0 +1,39 @@
+version: "3.8"
+
+# NOTE: ghcr.io/thvjq/sms-bridge is not published yet. Build and push it
+# yourself first — see the "Server setup" section of the install guide —
+# or TrueNAS SCALE's Custom App installer won't be able to pull the image.
+
+services:
+  sms-bridge:
+    image: ghcr.io/thvjq/sms-bridge:latest
+    container_name: sms-bridge
+    restart: unless-stopped
+
+    ports:
+      - "4000:4000"
+
+    environment:
+      PORT: "4000"
+      # Generate your own key, e.g.: openssl rand -hex 32
+      # Must match the API key configured in the Android app, browser
+      # extension, and Tampermonkey script. Do NOT reuse the key that was
+      # previously committed to this repo's sms-extension/config.js — that
+      # one is public and must be rotated.
+      API_KEY: "CHANGE_ME_GENERATE_A_NEW_RANDOM_KEY"
+      DB_DIR: "/app/data"
+
+    volumes:
+      # Persist the SQLite database to a TrueNAS dataset.
+      # Create the dataset first:
+      #   TrueNAS → Datasets → Add Dataset → name: sms-bridge-data
+      # Then set the path below to wherever TrueNAS mounts it, e.g.:
+      #   /mnt/pool/sms-bridge-data:/app/data
+      - /mnt/pool/sms-bridge-data:/app/data
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
