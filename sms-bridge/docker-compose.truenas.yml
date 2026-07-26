@@ -21,6 +21,19 @@ services:
       # previously committed to this repo's sms-extension/config.js — that
       # one is public and must be rotated.
       API_KEY: "CHANGE_ME_GENERATE_A_NEW_RANDOM_KEY"
+
+      # Optional. Enables the account-administration endpoints under
+      # /api/tools/sms-bridge/admin. Leave it unset and those routes do not
+      # exist at all — the CLI is the expected way to manage accounts:
+      #   docker exec -it sms-bridge node scripts/accounts.js list
+      # Must be a different secret from API_KEY: an account key can send texts,
+      # an admin key can mint credentials for any account.
+      # ADMIN_KEY: "CHANGE_ME_A_DIFFERENT_RANDOM_KEY"
+
+      # Where the SQLite database and the server keypair live. This MUST point
+      # at the mounted volume below — the container filesystem is replaced on
+      # every deploy, and losing the keypair makes stored inbound messages
+      # permanently undecryptable.
       DB_DIR: "/app/data"
 
     volumes:
