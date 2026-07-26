@@ -6,6 +6,7 @@ const auth       = require('../../middleware/auth');
 const adminAuth  = require('../../middleware/adminAuth');
 const rateLimit  = require('../../middleware/rateLimit');
 const repo       = require('./repo');
+const clientKeys = require('./clientKeys');
 const E2E        = require('./crypto');
 
 const router     = express.Router();
@@ -110,7 +111,19 @@ router.post('/link', rateLimit({ name: 'link', windowMs: 60_000, max: 10 }), (re
   // here would hand a phone paired into one account a credential that reads every other account.
   const minted = accountsDb.mintDeviceKey(accountId, device_id, label && `Phone: ${label}`);
 
-  res.json({ ok: true, api_key: minted.key, server_key: serverKeys.publicKeyB64 });
+  // The keys the phone must encrypt replies to. `client_key` is the single-key form NexLink already
+  // prefers; `client_keys` carries the whole set, which is what an account with several PCs needs.
+  // `server_key` is retained only so an un-upgraded phone still has something to encrypt to — and
+  // that path is exactly the one the server can read.
+  const desktops = clientKeys.list(accountId);
+
+  res.json({
+    ok: true,
+    api_key:     minted.key,
+    client_keys: desktops.map(k => ({ key_id: k.key_id, public_key: k.public_key, label: k.label })),
+    client_key:  desktops.length === 1 ? desktops[0].public_key : undefined,
+    server_key:  serverKeys.publicKeyB64,
+  });
 });
 
 router.get('/devices', auth, (req, res) => {
@@ -212,24 +225,67 @@ reap();   // also on boot, so a crash mid-delivery recovers immediately
 // ── Incoming ─────────────────────────────────────────────────────────────────
 
 router.post('/incoming', auth, (req, res) => {
-  const { from, encrypted_message, message, device_id } = req.body;
+  const { from, envelopes, encrypted_message, message, device_id } = req.body;
   if (!from) return res.status(400).json({ error: '"from" required' });
+
+  // Preferred path: one envelope per registered desktop key. The server stores the map verbatim and
+  // holds no key that opens any of it.
+  if (envelopes && typeof envelopes === 'object' && Object.keys(envelopes).length) {
+    repo.incoming.add(req.accountId, {
+      deviceId: device_id, sender: from, message: JSON.stringify(envelopes), encrypted: true, e2e: true,
+    });
+    return res.json({ ok: true, e2e: true });
+  }
+
+  // Legacy path: a phone that has not been updated encrypts to the server's key, which means the
+  // server can read it. Accepted so an old app keeps working, and flagged so nobody has to guess.
   const stored = encrypted_message
     ? (typeof encrypted_message === 'string' ? encrypted_message : JSON.stringify(encrypted_message))
     : message;
+  if (!stored) return res.status(400).json({ error: '"envelopes", "encrypted_message" or "message" required' });
   repo.incoming.add(req.accountId, {
-    deviceId: device_id, sender: from, message: stored, encrypted: !!encrypted_message,
+    deviceId: device_id, sender: from, message: stored, encrypted: !!encrypted_message, e2e: false,
   });
-  res.json({ ok: true });
+  res.json({ ok: true, e2e: false });
 });
 
 router.get('/incoming', auth, (req, res) => {
   const messages = repo.incoming.list(req.accountId).map(row => {
+    // End-to-end rows are relayed exactly as received. The caller picks the envelope matching its
+    // own key_id and decrypts it locally.
+    if (row.e2e) {
+      let envelopes = null;
+      try { envelopes = JSON.parse(row.message); } catch { /* corrupt row — reported below */ }
+      const { message, ...rest } = row;
+      return { ...rest, envelopes, e2e: 1 };
+    }
     if (!row.encrypted) return row;
-    try { return { ...row, message: E2E.decrypt(JSON.parse(row.message), serverKeys.privateKey), decrypted: true }; }
+    // Legacy: encrypted to the server's own key, so the server is the one that opens it.
+    try { return { ...row, message: E2E.decrypt(JSON.parse(row.message), serverKeys.privateKey), decrypted: true, server_readable: true }; }
     catch { return { ...row, message: '[decryption failed]', decrypted: false }; }
   });
   res.json({ messages });
+});
+
+// ── Desktop keys (Stage 3) ───────────────────────────────────────────────────
+
+router.post('/client-key', auth, (req, res) => {
+  const { public_key, label } = req.body;
+  if (!public_key) return res.status(400).json({ error: '"public_key" is required' });
+  try {
+    res.json({ ok: true, ...clientKeys.register(req.accountId, public_key, label) });
+  } catch (e) {
+    if (e.code === 'BAD_KEY') return res.status(400).json({ error: e.message, code: e.code });
+    throw e;
+  }
+});
+
+// The phone reads this to learn who it must encrypt replies for.
+router.get('/client-keys', auth, (req, res) => res.json({ keys: clientKeys.list(req.accountId) }));
+
+router.delete('/client-keys/:key_id', auth, (req, res) => {
+  if (!clientKeys.remove(req.accountId, req.params.key_id)) return res.status(404).json({ error: 'No such client key' });
+  res.json({ ok: true, deleted: req.params.key_id });
 });
 
 // ── Inspection ───────────────────────────────────────────────────────────────
@@ -303,6 +359,9 @@ module.exports = {
     { method: 'POST',   path: '/mark-failed',                auth: true  },
     { method: 'POST',   path: '/incoming',                   auth: true  },
     { method: 'GET',    path: '/incoming',                   auth: true  },
+    { method: 'POST',   path: '/client-key',                 auth: true  },
+    { method: 'GET',    path: '/client-keys',                auth: true  },
+    { method: 'DELETE', path: '/client-keys/:key_id',        auth: true  },
     { method: 'GET',    path: '/history',                    auth: true  },
     { method: 'GET',    path: '/stats',                      auth: true  },
     { method: 'GET',    path: '/admin/accounts',             auth: 'admin' },

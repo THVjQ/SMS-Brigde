@@ -55,6 +55,12 @@ migrate.once('stage1-fail-untargeted-pending', () => {
 
 accounts.migrateToTenancy(['paired_devices', 'pairing_codes', 'sms_messages', 'incoming_messages']);
 
+// ── Stage 3 — inbound the server cannot read ─────────────────────────────────
+// Marks messages the phone addressed to the desktops' own keys, which are relayed untouched.
+// Existing rows stay 0: they were encrypted to the server's key and the server does decrypt them.
+
+migrate.addColumn('incoming_messages', 'e2e', 'INTEGER DEFAULT 0');
+
 // The default target moves from a server-wide setting to a property of the account that owns it.
 migrate.once('stage2-move-default-device-to-account', () => {
   const row = db.prepare("SELECT value FROM bridge_config WHERE key='default_device_id'").get();

@@ -21,7 +21,17 @@ function generateDeviceKey() {
   };
 }
 
-async function startServer(env = {}) {
+/** Suites run in parallel on random ports, so a collision is rare but not impossible — retry it. */
+async function startServer(env = {}, attempt = 0) {
+  try {
+    return await tryStartServer(env);
+  } catch (e) {
+    if (attempt >= 3 || !/EADDRINUSE|exited early/.test(e.message)) throw e;
+    return startServer(env, attempt + 1);
+  }
+}
+
+async function tryStartServer(env = {}) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sms-bridge-test-'));
   const port    = 20000 + Math.floor(Math.random() * 20000);
 

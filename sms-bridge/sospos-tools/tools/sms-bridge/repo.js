@@ -189,10 +189,15 @@ messages.COLUMNS = 'id,phone,status,encrypted,source,target_device_id,created_at
 // ── Inbound messages ─────────────────────────────────────────────────────────
 
 const incoming = {
-  add(accountId, { deviceId, sender, message, encrypted }) {
+  /**
+   * `e2e` marks a message the server cannot read: the phone addressed it to the desktops' keys and
+   * this row is relayed untouched. Without the flag there is no way to tell it apart from a legacy
+   * message encrypted to the server's own key, which the server does still decrypt.
+   */
+  add(accountId, { deviceId, sender, message, encrypted, e2e }) {
     requireAccount(accountId);
-    return db.prepare('INSERT INTO incoming_messages (device_id,sender,message,encrypted,account_id) VALUES(?,?,?,?,?)')
-             .run(deviceId || '', sender, message, encrypted ? 1 : 0, accountId).lastInsertRowid;
+    return db.prepare('INSERT INTO incoming_messages (device_id,sender,message,encrypted,e2e,account_id) VALUES(?,?,?,?,?,?)')
+             .run(deviceId || '', sender, message, encrypted ? 1 : 0, e2e ? 1 : 0, accountId).lastInsertRowid;
   },
 
   list(accountId, limit = 100) {
