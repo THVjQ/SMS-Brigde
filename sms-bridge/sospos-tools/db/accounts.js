@@ -51,7 +51,7 @@ function safeEqual(a, b) {
 }
 
 function findByKey(key) {
-  return db.prepare('SELECT id, account_id FROM api_keys WHERE key_hash=? AND revoked=0').get(hashKey(key)) || null;
+  return db.prepare('SELECT id, account_id, user_id FROM api_keys WHERE key_hash=? AND revoked=0').get(hashKey(key)) || null;
 }
 
 const touchKey = keyId => db.prepare("UPDATE api_keys SET last_used=CURRENT_TIMESTAMP WHERE id=?").run(keyId);

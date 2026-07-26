@@ -1,10 +1,19 @@
 # SOS Messenger — Chrome Extension User Guide
 
+> **Which client is this?** This guide covers `sms-extension/` — the Chrome extension. The
+> maintained browser client is now the
+> [SOS SMS Sender userscript](https://github.com/THVjQ/sos-sms-sender), which adds username and
+> password sign-in, encrypts outbound messages in the browser rather than on the server, chooses
+> which phone to send through, confirms delivery, and reads replies.
+>
+> The extension still works, with two caveats worth knowing: it authenticates with a shared API key
+> rather than a sign-in, and it predates account isolation and browser-side outbound encryption.
+
 ---
 
 ## Overview
 
-The SOS Messenger Chrome extension lets you send SMS messages from your browser, routed through a paired Android phone. All messages are end-to-end encrypted — no one can read them in transit.
+The SOS Messenger Chrome extension lets you send SMS messages from your browser, routed through a paired Android phone. Messages are encrypted to the phone's key, so the server relays ciphertext and cannot read outbound content. Metadata — numbers, timing, sizes — is not encrypted.
 
 ---
 

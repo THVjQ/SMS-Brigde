@@ -12,6 +12,7 @@
 const db       = require('./database');
 const migrate  = require('./migrate');
 const accounts = require('./accounts');
+require('./users');   // users table + api_keys.user_id
 
 db.exec(`CREATE TABLE IF NOT EXISTS sms_messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT, phone TEXT NOT NULL, message TEXT NOT NULL,

@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **Product:** SOS Messenger (Android app), SMS Bridge server, SOS Messenger browser extension, SOS SMS Sender userscript
-**Last updated:** 2 July 2026
+**Last updated:** 26 July 2026
 
 ---
 
@@ -26,10 +26,12 @@ Because you host the server yourself, **whoever controls that server has the sam
 | SMS & MMS messages (on-device) | Android system SMS/MMS database on the phone | No |
 | Contacts (name, number) | Read-only from the phone's contacts — never copied off-device | No |
 | Recipient phone numbers (outbound sends) | Stored **in plaintext** in the server's SQLite database (`sms_messages.phone`) | Yes — server you control |
-| Outbound message bodies | Encrypted at rest in the server database (see §4) | Yes — server you control, ciphertext only |
-| Inbound message bodies (SMS received on the phone) | Encrypted at rest in the server database; decrypted transiently in server memory when the browser extension fetches them (see §4) | Yes — server you control |
-| Pairing codes, device public keys | Server SQLite database, needed to link the app to the server | Yes — server you control |
-| API key | Stored in the Android app, browser extension, and Tampermonkey script settings | Sent with every request as an auth header |
+| Outbound message bodies | Sealed in the browser before sending; the server stores and relays ciphertext only (see §4) | Yes — server you control, ciphertext only |
+| Inbound message bodies (SMS received on the phone) | Sealed on the phone for each registered desktop; the server stores and relays them untouched (see §4) | Yes — server you control, ciphertext only |
+| Pairing codes, device public keys, desktop public keys | Server SQLite database, needed to link devices and route encrypted messages | Yes — server you control |
+| Usernames and passwords | Server SQLite database. Passwords are stored **only as scrypt hashes** — never in plaintext, and not recoverable | Sent once when signing in |
+| API keys | Issued by signing in or pairing, held by the browser or phone. Stored on the server **only as SHA-256 hashes** | Sent with every request as an auth header |
+| Message queue metadata | Timing, message sizes, delivery status, and which device sent or received what | Yes — server you control, **never encrypted** |
 
 No analytics SDK, crash-reporting SDK, or advertising SDK is included in the Android app, extension, or userscript.
 
@@ -59,15 +61,26 @@ The browser extension requests only the `storage` permission (to save your serve
 
 Messages are protected using **ECIES**: P-256 ECDH key agreement, HKDF-SHA256 key derivation, AES-256-GCM authenticated encryption, with a fresh ephemeral key pair per message.
 
-**Outbound messages (browser → phone) are genuinely end-to-end encrypted.** When you send a message from the extension or userscript, it is encrypted to the paired Android device's public key before it touches the database. The server does not hold the phone's private key and **cannot decrypt outbound message content.**
+**Outbound messages (browser → phone) are end-to-end encrypted.** The Tampermonkey script (v21+) looks up the target phone's public key and seals the message in your browser before it is sent. The server stores and relays ciphertext and holds no key that opens it.
 
-**Inbound messages (phone → browser) are end-to-end encrypted when both sides are up to date.** Each desktop client generates its own P-256 key pair and registers the public half with the server (`POST /client-key`); the private half never leaves that browser profile. The phone encrypts each incoming SMS once per registered desktop key and posts the resulting envelopes, which the server stores and relays untouched. The server holds no key that opens them.
+**Inbound messages (phone → browser) are end-to-end encrypted.** Each desktop generates its own P-256 key pair and registers the public half (`POST /client-key`); the private half never leaves that browser profile. The phone encrypts each incoming SMS once per registered desktop and posts the resulting envelopes, which the server relays untouched.
 
-**The older inbound path is still accepted, and the server can read those messages.** A phone running an app version that predates desktop keys encrypts to the *server's* own key pair (`.keys/server.pem` on the server host), and the server decrypts it in memory when a client asks for it. Such messages are returned with `server_readable: true` and the Replies panel labels them, so this state is visible rather than assumed away. Update the phone app to close the gap.
+### Two older paths where the server *can* read content
 
-**Phone numbers are never encrypted** — they're stored in plaintext in the server database so the server can route messages and display history.
+Both are accepted for compatibility, and both are labelled rather than hidden:
 
-**Metadata is always visible to the server**, in both directions: phone numbers, timing, message sizes, and which device sent or received what.
+- **A Tampermonkey script older than v21** posts the message in plaintext and asks the server to encrypt it. The server sees the text in memory on the way through. Update the script to close this.
+- **A phone app older than desktop-key support** encrypts inbound to the *server's* own key pair (`.keys/server.pem`), which the server decrypts when a client asks for it. Those messages are returned with `server_readable: true` and the Replies panel says so on each one. Update the phone app to close this.
+
+### What is never encrypted
+
+**Phone numbers and metadata.** Recipient numbers, timing, message sizes, delivery status and which device sent or received what are all stored in the clear, because the server needs them to route messages and show history. Anyone with access to the server can see who you texted and when, even when they cannot read a word of it.
+
+### What isolation between accounts does and does not cover
+
+Accounts are scoped in the database, and the isolation is tested: one account cannot list, target, poll, read or delete another's devices, messages, history or stats. But **whoever runs the server is not covered by that boundary.** They have the database and the filesystem, so they see all metadata for every account, and any content arriving over the two legacy paths above. If you are hosting for someone else, they are trusting you with that.
+
+**API keys are bearer tokens.** Anyone holding one is that account until it is revoked.
 
 ---
 

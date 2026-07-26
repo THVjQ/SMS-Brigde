@@ -1,5 +1,13 @@
 # SOS Messenger — Android App User Guide
 
+> **Which app is this?** This guide covers `SosPosMessenger/` — the Android app bundled in this
+> repository. The deployment at SOS Phone Repairs now runs **NexLink** instead, whose Computer
+> Bridge is the maintained client: it pairs with a one-time code only (no API key to type), is
+> issued its own revocable credential at pairing, and encrypts replies to each desktop's key.
+>
+> Both apps still work against this server. Where they differ, NexLink is the one that has been
+> updated; the pairing and settings screens described below belong to the older app.
+
 ---
 
 ## Overview

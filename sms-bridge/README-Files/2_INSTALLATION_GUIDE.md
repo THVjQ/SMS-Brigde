@@ -42,21 +42,38 @@ Copy the example config:
 cp .env.example .env
 ```
 
-Open `.env` and fill in the three values:
+Open `.env` and fill it in:
 
 ```
 PORT=4000
-API_KEY=<generate below>
+DB_DIR=/absolute/path/to/persistent/storage
 ALLOWED_ORIGIN=https://app.sospos.com.au
+
+# Optional. Only needed for legacy clients that authenticate with a shared key
+# instead of signing in. Leave it unset on a new install.
+# API_KEY=<openssl rand -hex 32>
+
+# Optional break-glass admin credential, for recovering when nobody can sign in.
+# Must be a DIFFERENT secret from API_KEY. Unset is the right default.
+# ADMIN_KEY=<openssl rand -hex 32>
 ```
 
-Generate a secure API key (copy the output and paste it as your `API_KEY`):
+> **`DB_DIR` matters more than it looks.** It is where the SQLite database and the server's key pair
+> live. In a container it must point at a mounted volume — anything written elsewhere is discarded
+> on the next deploy, taking your paired devices with it. Losing the key pair also makes any stored
+> legacy inbound messages permanently unreadable.
+
+**You do not need an API key on a new install.** People sign in with a username and password, and
+the browser is issued a key behind the scenes. The first account registered on a fresh server
+becomes the administrator; everyone after that is pending until an admin approves them.
+
+If you prefer to create the first administrator from the command line instead of by registering:
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+echo -n 'a-strong-password' | node scripts/accounts.js adduser 1 yourname --admin
 ```
 
-> **Save this key.** You will need it in the Chrome extension and Android app.
+Reading the password from stdin keeps it out of your shell history.
 
 ### 1.3 Install and start
 
@@ -281,7 +298,9 @@ When you're ready to move from testing to `app.sospos.com.au`:
 
 ### Server
 - [ ] `sospos-tools/` folder on server
-- [ ] `.env` configured with API key and ALLOWED_ORIGIN
+- [ ] `.env` configured with `DB_DIR` pointing at persistent storage, and `ALLOWED_ORIGIN`
+- [ ] `npm test` passes
+- [ ] First administrator created, by registering in the browser or via `accounts.js adduser`
 - [ ] `npm install` completed
 - [ ] Server running via PM2
 - [ ] `/health` returns `{"ok":true}` from browser

@@ -175,11 +175,24 @@ describe('account isolation', () => {
 });
 
 describe('admin surface', () => {
-  test('admin routes do not exist without ADMIN_KEY', async () => {
-    const server = await startServer();   // no ADMIN_KEY
+  // Two different refusals, on purpose. No credential at all is a plain 401 — there is nothing to
+  // hide from someone who has not identified themselves. A caller holding a VALID non-admin
+  // credential gets 404 instead: they have proven who they are, and who they are has no business
+  // learning that these routes exist.
+
+  test('no credential is a 401', async () => {
+    const server = await startServer();   // no ADMIN_KEY, nobody registered
     try {
       const res = await call(server, 'GET', '/admin/accounts', { adminKey: 'anything' });
-      assert.equal(res.status, 404, 'an unconfigured admin surface should not advertise itself');
+      assert.equal(res.status, 401);
+    } finally { server.stop(); }
+  });
+
+  test('a valid non-admin key is a 404', async () => {
+    const server = await startServer();
+    try {
+      const res = await call(server, 'GET', '/admin/accounts', { apiKey: 'test-api-key' });
+      assert.equal(res.status, 404, 'a non-admin should not learn the admin routes exist');
     } finally { server.stop(); }
   });
 
@@ -201,8 +214,9 @@ describe('legacy upgrade path', () => {
       assert.equal(res.status, 200);
       assert.equal(res.body.devices.length, 1);
 
-      const accountsList = await call(server, 'GET', '/admin/accounts', { adminKey: ADMIN });
-      assert.equal(accountsList.status, 404, 'still no admin surface configured here');
+      // The legacy env key resolves to an account but to no user, so it is not an admin.
+      const accountsList = await call(server, 'GET', '/admin/accounts', { apiKey: 'test-api-key' });
+      assert.equal(accountsList.status, 404, 'the shared key confers no administrative access');
     } finally { server.stop(); }
   });
 });

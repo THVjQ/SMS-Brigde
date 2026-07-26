@@ -5,6 +5,7 @@
 // and no way to revoke a compromised PC without re-keying the whole shop.
 
 const accounts = require('../db/accounts');
+const users    = require('../db/users');
 
 // Deprecation notices are throttled: the legacy key is used on every poll, and a warning per
 // request would bury everything else in the log.
@@ -17,8 +18,15 @@ module.exports = function auth(req, res, next) {
 
   const found = accounts.findByKey(key);
   if (found) {
+    // A key minted by logging in carries its user, which is what the admin routes gate on. Keys
+    // minted by the CLI have no user and are account-scoped only.
+    const user = found.user_id ? users.byId(found.user_id) : null;
+    if (user && user.status !== 'active') {
+      return res.status(403).json({ error: 'This account is not active', code: user.status.toUpperCase() });
+    }
     req.accountId = found.account_id;
     req.apiKeyId  = found.id;
+    req.user      = user;
     accounts.touchKey(found.id);
     return next();
   }

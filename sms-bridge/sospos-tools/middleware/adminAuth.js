@@ -1,26 +1,40 @@
-// middleware/adminAuth.js — ADMIN_KEY gate for account management.
+// middleware/adminAuth.js — gate for account and user administration.
 //
-// Deliberately a different credential from any account key: an account key can send texts, an admin
-// key can mint credentials for any account. Unset means the admin routes do not exist at all, which
-// is the right default for a server reachable from the open internet.
+// Two ways in, and they exist for different reasons:
+//
+//   1. A logged-in user whose role is 'admin'. This is the normal path — the browser admin panel
+//      just uses the key it already holds, so there is no second secret to distribute or store.
+//   2. ADMIN_KEY from the environment, if set. A break-glass credential for bootstrapping the first
+//      admin or recovering when no one can log in. Unset means this path does not exist.
+//
+// Deliberately NOT the same credential as an account key: an account key sends texts, an admin
+// credential mints access for any account.
 
 const crypto = require('node:crypto');
+const auth   = require('./auth');
+const users  = require('../db/users');
 
-const enabled = () => !!process.env.ADMIN_KEY;
+function envKeyMatches(presented) {
+  if (!process.env.ADMIN_KEY || !presented) return false;
+  const a = Buffer.from(String(presented), 'utf8');
+  const b = Buffer.from(String(process.env.ADMIN_KEY), 'utf8');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 
 module.exports = function adminAuth(req, res, next) {
-  // 404 rather than 401 when disabled — an endpoint nobody configured should not advertise itself.
-  if (!enabled()) return res.status(404).json({ error: `No route: ${req.method} ${req.path}` });
+  if (envKeyMatches(req.headers['x-admin-key'])) return next();
 
-  const key = req.headers['x-admin-key'];
-  if (!key) return res.status(401).json({ error: 'Unauthorized — missing admin key' });
-
-  const a = Buffer.from(String(key), 'utf8');
-  const b = Buffer.from(String(process.env.ADMIN_KEY), 'utf8');
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-    return res.status(401).json({ error: 'Unauthorized — invalid admin key' });
+  // Otherwise fall through to normal key auth and require the resolved user to be an admin.
+  if (!req.headers['x-api-key']) {
+    return res.status(401).json({ error: 'Unauthorized — admin access required', code: 'ADMIN_REQUIRED' });
   }
-  next();
+  auth(req, res, () => {
+    if (!users.isAdmin(req.user)) {
+      // 404 rather than 403: a non-admin has no business learning these routes exist.
+      return res.status(404).json({ error: `No route: ${req.method} ${req.path}` });
+    }
+    next();
+  });
 };
 
-module.exports.enabled = enabled;
+module.exports.envKeyMatches = envKeyMatches;

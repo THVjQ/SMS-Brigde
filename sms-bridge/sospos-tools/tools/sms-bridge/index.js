@@ -2,6 +2,7 @@
 const express    = require('express');
 require('../../db/schema');   // tables + migrations, shared with the admin CLI
 const accountsDb = require('../../db/accounts');
+const usersDb    = require('../../db/users');
 const auth       = require('../../middleware/auth');
 const adminAuth  = require('../../middleware/adminAuth');
 const rateLimit  = require('../../middleware/rateLimit');
@@ -308,6 +309,69 @@ router.delete('/clear-sent', auth, (req, res) => {
   res.json({ ok: true, deleted: repo.messages.clearSent(req.accountId, days) });
 });
 
+// ── Sign-in ──────────────────────────────────────────────────────────────────
+//
+// Logging in mints a normal API key for the browser, so nothing downstream changes — a person just
+// never handles a key. Signup is open but lands in `pending`: the server is on a public URL, and an
+// ungated signup would let a passer-by queue SMS through it.
+
+// Tight limits. These are the only endpoints where guessing gets you an account. Overridable so a
+// test suite can make dozens of sign-in calls in a second without tripping it.
+const authLimit = rateLimit({
+  name: 'auth', windowMs: 60_000, max: parseInt(process.env.AUTH_RATE_MAX) || 10,
+});
+
+function authError(res, e) {
+  if (e.status) return res.status(e.status).json({ error: e.message, code: e.code });
+  if (e.code)   return res.status(400).json({ error: e.message, code: e.code });
+  throw e;
+}
+
+router.post('/auth/register', authLimit, (req, res) => {
+  const { username, password } = req.body || {};
+  try {
+    // The very first account on a fresh server becomes an active admin — otherwise there is nobody
+    // who can approve anyone, including themselves. Every later signup is pending.
+    const bootstrap = !usersDb.hasAdmin();
+    const user = usersDb.register(username, password,
+      bootstrap ? { role: 'admin', status: 'active' } : {});
+    res.status(bootstrap ? 200 : 202).json({
+      ok: true,
+      user,
+      pending: !bootstrap,
+      message: bootstrap
+        ? 'Account created as the server administrator. You can sign in now.'
+        : 'Account requested. An administrator has to approve it before you can sign in.',
+    });
+  } catch (e) { authError(res, e); }
+});
+
+router.post('/auth/login', authLimit, (req, res) => {
+  const { username, password, label } = req.body || {};
+  try {
+    res.json({ ok: true, ...usersDb.login(username, password, label) });
+  } catch (e) { authError(res, e); }
+});
+
+router.post('/auth/change-password', authLimit, (req, res) => {
+  const { username, password, new_password } = req.body || {};
+  try {
+    usersDb.changePassword(username, password, new_password);
+    res.json({ ok: true });
+  } catch (e) { authError(res, e); }
+});
+
+/** Who the presented key belongs to — lets a client show the signed-in user and reveal admin UI. */
+router.get('/auth/me', auth, (req, res) => {
+  res.json({
+    ok: true,
+    account_id: req.accountId,
+    user: req.user ? usersDb.publicView(req.user) : null,
+    is_admin: usersDb.isAdmin(req.user) || adminAuth.envKeyMatches(req.headers['x-admin-key']),
+    legacy_key: !!req.legacyKey,
+  });
+});
+
 // ── Account administration ───────────────────────────────────────────────────
 //
 // Behind ADMIN_KEY, which is a different credential from any account key. Absent that variable the
@@ -344,6 +408,28 @@ router.delete('/admin/keys/:id', adminLimit, adminAuth, (req, res) => {
   res.json({ ok: true, revoked: Number(req.params.id) });
 });
 
+// The approval queue. `?status=pending` is what the admin panel opens on.
+router.get('/admin/users', adminLimit, adminAuth, (req, res) => {
+  res.json({ users: usersDb.list(req.query.status) });
+});
+
+router.post('/admin/users/:id/status', adminLimit, adminAuth, (req, res) => {
+  const { status } = req.body || {};
+  if (!usersDb.STATUSES.includes(status)) {
+    return res.status(400).json({ error: `status must be one of: ${usersDb.STATUSES.join(', ')}` });
+  }
+  // Refuse to strip the last admin of access — nobody left to approve anyone, including themselves.
+  const target = usersDb.byId(req.params.id);
+  if (!target) return res.status(404).json({ error: 'No such user' });
+  if (target.role === 'admin' && status !== 'active') {
+    const otherAdmins = usersDb.list().filter(u => u.role === 'admin' && u.status === 'active' && u.id !== target.id);
+    if (!otherAdmins.length) {
+      return res.status(409).json({ error: 'That is the only active administrator', code: 'LAST_ADMIN' });
+    }
+  }
+  res.json({ ok: true, user: usersDb.setStatus(req.params.id, status) });
+});
+
 module.exports = {
   name: 'SMS Bridge', description: 'E2E encrypted SMS bridge — ECIES P-256 + AES-256-GCM.', version: '3.0.0', router,
   endpoints: [
@@ -364,6 +450,12 @@ module.exports = {
     { method: 'DELETE', path: '/client-keys/:key_id',        auth: true  },
     { method: 'GET',    path: '/history',                    auth: true  },
     { method: 'GET',    path: '/stats',                      auth: true  },
+    { method: 'POST',   path: '/auth/register',              auth: false },
+    { method: 'POST',   path: '/auth/login',                 auth: false },
+    { method: 'POST',   path: '/auth/change-password',       auth: false },
+    { method: 'GET',    path: '/auth/me',                    auth: true  },
+    { method: 'GET',    path: '/admin/users',                auth: 'admin' },
+    { method: 'POST',   path: '/admin/users/:id/status',     auth: 'admin' },
     { method: 'GET',    path: '/admin/accounts',             auth: 'admin' },
     { method: 'POST',   path: '/admin/accounts',             auth: 'admin' },
     { method: 'GET',    path: '/admin/accounts/:id/keys',    auth: 'admin' },

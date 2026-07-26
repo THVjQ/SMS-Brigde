@@ -15,6 +15,21 @@
 
 require('../db/schema');   // ensures the tables exist even on a database the server has never opened
 const accounts = require('../db/accounts');
+const users    = require('../db/users');
+
+/**
+ * Reads a password from stdin when one is not given as an argument, so it never lands in shell
+ * history:  echo -n 'secret' | node scripts/accounts.js adduser 1 luca --admin
+ */
+function readPassword(arg) {
+  if (arg) return arg;
+  const fs = require('node:fs');
+  try {
+    return fs.readFileSync(0, 'utf8').replace(/\r?\n$/, '');
+  } catch {
+    return '';
+  }
+}
 
 const [, , command, ...args] = process.argv;
 
@@ -26,6 +41,16 @@ const usage = () => {
   keys <account-id>          list an account's keys (never the keys themselves)
   mint <account-id> [label]  mint a key — printed once, then only its hash is kept
   revoke <key-id>            revoke a key immediately
+
+  users [status]             list people; optionally filter pending/active/denied/suspended
+  adduser <account-id> <username> [password] [--admin]
+                             create a sign-in, active immediately. Omit the password to
+                             read it from stdin and keep it out of shell history:
+                               echo -n 'secret' | node scripts/accounts.js adduser 1 luca --admin
+  passwd <username> [password]       set a password without knowing the old one
+  approve <user-id>          approve a pending sign-up
+  deny <user-id>             refuse one, revoking any keys it holds
+  suspend <user-id>          revoke access from an active user
 `);
 };
 
@@ -75,6 +100,50 @@ try {
       if (!args[0]) { usage(); process.exit(1); }
       if (!accounts.revokeKey(args[0])) { console.error(`No key ${args[0]}.`); process.exit(1); }
       console.log(`Key ${args[0]} revoked — it stops working on the next request.`);
+      break;
+    }
+
+    case 'users':
+      table(users.list(args[0]));
+      break;
+
+    case 'adduser': {
+      const admin = args.includes('--admin');
+      const rest  = args.filter(a => a !== '--admin');
+      const [accountId, username, password] = rest;
+      if (!accountId || !username) { usage(); process.exit(1); }
+      if (!accounts.getAccount(accountId)) { console.error(`No account ${accountId}.`); process.exit(1); }
+      const user = users.register(username, readPassword(password), {
+        accountId: Number(accountId), role: admin ? 'admin' : 'user', status: 'active',
+      });
+      console.log(`Created ${admin ? 'admin' : 'user'} "${user.username}" on account ${user.account_id}, active.`);
+      console.log('They can now sign in from the browser — no API key to copy.');
+      break;
+    }
+
+    case 'passwd': {
+      const [username, password] = args;
+      if (!username) { usage(); process.exit(1); }
+      const user = users.byUsername(username);
+      if (!user) { console.error(`No user "${username}".`); process.exit(1); }
+      const pw = readPassword(password);
+      users.validatePassword(pw);
+      require('../db/database')
+        .prepare('UPDATE users SET password_hash=? WHERE id=?')
+        .run(users.hashPassword(pw), user.id);
+      console.log(`Password set for "${user.username}".`);
+      break;
+    }
+
+    case 'approve':
+    case 'deny':
+    case 'suspend': {
+      if (!args[0]) { usage(); process.exit(1); }
+      const status = { approve: 'active', deny: 'denied', suspend: 'suspended' }[command];
+      const user = users.setStatus(args[0], status);
+      if (!user) { console.error(`No user ${args[0]}.`); process.exit(1); }
+      console.log(`"${user.username}" is now ${user.status}.`);
+      if (status !== 'active') console.log('Any keys they held have been revoked.');
       break;
     }
 
