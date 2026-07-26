@@ -8,7 +8,7 @@
 
 ## Overview
 
-SOS Messenger is a three-part encrypted SMS bridge system that lets you send and receive SMS messages from a browser, routed through a real Android phone. All messages are end-to-end encrypted — the server cannot read message content.
+SOS Messenger is a three-part encrypted SMS bridge system that lets you send and receive SMS messages from a browser, routed through a real Android phone. Messages are end-to-end encrypted in both directions — the server relays ciphertext and holds no key that opens it. (One exception: a phone running an app version older than desktop-key support still encrypts inbound to the server's own key. Those messages are returned flagged `server_readable`.)
 
 ```
 ┌─────────────────┐     encrypted      ┌──────────────┐     encrypted     ┌─────────────────┐

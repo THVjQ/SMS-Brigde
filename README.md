@@ -29,7 +29,7 @@ The browser extension (or the Tampermonkey script on SOS POS) sends a message to
 
 End-to-end encrypted using **ECIES** — P-256 ECDH key agreement, HKDF-SHA256 key derivation, AES-256-GCM authenticated encryption. Each message uses a fresh ephemeral key pair for forward secrecy.
 
-The server stores and relays ciphertext only and **cannot read outbound message content** (browser → phone). Inbound messages (phone → browser) are decrypted server-side to relay them to the browser extension — see [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) for the full breakdown.
+The server stores and relays ciphertext only and **cannot read message content in either direction**, provided the phone app and desktop client are both current. Each desktop registers its own public key and the phone encrypts every reply to it; the server relays those envelopes untouched. A phone running an older app still encrypts inbound to the server's own key, which the server *can* read — those messages are flagged `server_readable` rather than passed off as end-to-end. See [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) for the full breakdown.
 
 ---
 

@@ -61,11 +61,13 @@ Messages are protected using **ECIES**: P-256 ECDH key agreement, HKDF-SHA256 ke
 
 **Outbound messages (browser → phone) are genuinely end-to-end encrypted.** When you send a message from the extension or userscript, it is encrypted to the paired Android device's public key before it touches the database. The server does not hold the phone's private key and **cannot decrypt outbound message content.**
 
-**Inbound messages (phone → browser) are encrypted at rest, but the server can decrypt them.** The server generates and stores its own key pair (`.keys/server.pem` on the server host). Incoming SMS are encrypted to the *server's* public key before being stored, and the server decrypts them in memory using its own private key when the browser extension requests them. This means **whoever operates the server has the technical capability to read incoming message content** at the point of relay, even though it isn't stored in plaintext in the database.
+**Inbound messages (phone → browser) are end-to-end encrypted when both sides are up to date.** Each desktop client generates its own P-256 key pair and registers the public half with the server (`POST /client-key`); the private half never leaves that browser profile. The phone encrypts each incoming SMS once per registered desktop key and posts the resulting envelopes, which the server stores and relays untouched. The server holds no key that opens them.
+
+**The older inbound path is still accepted, and the server can read those messages.** A phone running an app version that predates desktop keys encrypts to the *server's* own key pair (`.keys/server.pem` on the server host), and the server decrypts it in memory when a client asks for it. Such messages are returned with `server_readable: true` and the Replies panel labels them, so this state is visible rather than assumed away. Update the phone app to close the gap.
 
 **Phone numbers are never encrypted** — they're stored in plaintext in the server database so the server can route messages and display history.
 
-If you require full end-to-end privacy for received messages as well, do not treat the server as untrusted — only run it on infrastructure you trust.
+**Metadata is always visible to the server**, in both directions: phone numbers, timing, message sizes, and which device sent or received what.
 
 ---
 
