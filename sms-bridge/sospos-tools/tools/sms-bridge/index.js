@@ -431,7 +431,12 @@ router.post('/admin/users/:id/status', adminLimit, adminAuth, (req, res) => {
 });
 
 module.exports = {
-  name: 'SMS Bridge', description: 'E2E encrypted SMS bridge — ECIES P-256 + AES-256-GCM.', version: '3.0.0', router,
+  // Bumped whenever the wire contract or the auth model changes — it is how a deployment is
+  // confirmed to have actually landed, so it has to move when the code does.
+  //   3.0.0  accounts and per-credential keys
+  //   3.1.0  inbound relayed as ciphertext to per-desktop keys
+  //   3.2.0  username/password sign-in with an approval queue
+  name: 'SMS Bridge', description: 'E2E encrypted SMS bridge — ECIES P-256 + AES-256-GCM.', version: '3.2.0', router,
   endpoints: [
     { method: 'GET',    path: '/pubkey',                     auth: false },
     { method: 'POST',   path: '/generate-code',              auth: true  },

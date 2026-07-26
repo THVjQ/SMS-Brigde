@@ -1,6 +1,6 @@
 {
   "name": "sms-bridge-server",
-  "version": "2.0.0",
+  "version": "3.2.0",
   "description": "Encrypted SMS bridge backend — Node.js/Express plugin server",
   "main": "server.js",
   "scripts": {
