@@ -1,8 +1,13 @@
-version: "3.8"
+name: sms-bridge
 
-# NOTE: ghcr.io/thvjq/sms-bridge is not published yet. Build and push it
-# yourself first — see the "Server setup" section of the install guide —
-# or TrueNAS SCALE's Custom App installer won't be able to pull the image.
+# Deploy:
+#   cp .env.example .env      # then fill it in — every value is required or fails loudly
+#   docker compose -f docker-compose.truenas.yml pull
+#   docker compose -f docker-compose.truenas.yml up -d
+#
+# Upgrading: `pull` then `up -d`. A plain `restart` reuses the cached image and
+# silently keeps running the old build — :latest is a moving tag, so nothing
+# notices a new digest on its own.
 
 services:
   sms-bridge:
@@ -15,34 +20,37 @@ services:
 
     environment:
       PORT: "4000"
-      # Generate your own key, e.g.: openssl rand -hex 32
-      # Must match the API key configured in the Android app, browser
-      # extension, and Tampermonkey script. Do NOT reuse the key that was
-      # previously committed to this repo's sms-extension/config.js — that
-      # one is public and must be rotated.
-      API_KEY: "CHANGE_ME_GENERATE_A_NEW_RANDOM_KEY"
+
+      # Generate with: openssl rand -hex 32
+      # Shared by the Android app and the Tampermonkey script. Never reuse the key
+      # that was once committed to sms-extension/config.js — that one is public.
+      API_KEY: ${API_KEY:?set API_KEY in .env}
 
       # Optional. Enables the account-administration endpoints under
-      # /api/tools/sms-bridge/admin. Leave it unset and those routes do not
-      # exist at all — the CLI is the expected way to manage accounts:
+      # /api/tools/sms-bridge/admin. Left empty those routes 404 and the CLI is the
+      # only way in, which is the right default on a publicly reachable server:
       #   docker exec -it sms-bridge node scripts/accounts.js list
-      # Must be a different secret from API_KEY: an account key can send texts,
-      # an admin key can mint credentials for any account.
-      # ADMIN_KEY: "CHANGE_ME_A_DIFFERENT_RANDOM_KEY"
+      # Must be a DIFFERENT secret from API_KEY — an account key sends texts, an
+      # admin key mints credentials for any account.
+      ADMIN_KEY: ${ADMIN_KEY:-}
 
-      # Where the SQLite database and the server keypair live. This MUST point
-      # at the mounted volume below — the container filesystem is replaced on
-      # every deploy, and losing the keypair makes stored inbound messages
-      # permanently undecryptable.
-      DB_DIR: "/app/data"
+      # Where the SQLite database and the server keypair live, inside the container.
+      # Must match the mount target below. Losing the keypair makes every stored
+      # inbound message permanently undecryptable.
+      DB_DIR: /app/data
 
     volumes:
-      # Persist the SQLite database to a TrueNAS dataset.
-      # Create the dataset first:
-      #   TrueNAS → Datasets → Add Dataset → name: sms-bridge-data
-      # Then set the path below to wherever TrueNAS mounts it, e.g.:
-      #   /mnt/pool/sms-bridge-data:/app/data
-      - /mnt/pool/sms-bridge-data:/app/data
+      # Long syntax on purpose: create_host_path=false makes Compose FAIL if the
+      # host path does not exist. The short `source:target` form silently creates a
+      # missing directory instead — which is how a deployment once ran for months
+      # against the literal placeholder /mnt/YOUR_POOL/sms-bridge-data, sitting on
+      # the boot pool. An unset DATA_DIR now stops the deploy rather than inventing
+      # somewhere to put your data.
+      - type: bind
+        source: ${DATA_DIR:?set DATA_DIR in .env to a dataset on a real pool, e.g. /mnt/tank/sms-bridge-data}
+        target: /app/data
+        bind:
+          create_host_path: false
 
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
@@ -50,3 +58,11 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+    # Without a cap the JSON log grows until the pool does. The reaper and the
+    # deprecation warning both log periodically.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

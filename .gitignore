@@ -4,3 +4,6 @@ node_modules/
 *.db-wal
 *.db-shm
 .env
+
+# Deployment secrets — never commit
+.env
