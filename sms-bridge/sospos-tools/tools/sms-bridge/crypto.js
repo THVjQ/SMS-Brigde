@@ -8,11 +8,23 @@ const ALG    = 'aes-256-gcm';
 const IV_LEN = 12;
 const INFO   = Buffer.from('sms-bridge-v1');
 const SALT   = Buffer.alloc(32);
-const KEYS_DIR = path.join(__dirname, '..', '..', '.keys');
+
+// Keys live alongside the database (see config.js). Regenerating the server keypair on every
+// container restart would silently break decryption of every already-stored inbound message.
+const { KEYS_DIR } = require('../../config');
+const LEGACY_KEYS_DIR = path.join(__dirname, '..', '..', '.keys');
 
 function loadOrCreateServerKeys() {
   fs.mkdirSync(KEYS_DIR, { recursive: true });
-  const keyFile = path.join(KEYS_DIR, 'server.pem');
+  const keyFile       = path.join(KEYS_DIR, 'server.pem');
+  const legacyKeyFile = path.join(LEGACY_KEYS_DIR, 'server.pem');
+
+  // Same carry-forward as the database: honouring DB_DIR must not orphan an existing keypair.
+  if (keyFile !== legacyKeyFile && !fs.existsSync(keyFile) && fs.existsSync(legacyKeyFile)) {
+    fs.copyFileSync(legacyKeyFile, keyFile);
+    console.log(`[crypto] Carried existing server keypair forward → ${keyFile}`);
+  }
+
   if (fs.existsSync(keyFile)) {
     const pem = JSON.parse(fs.readFileSync(keyFile, 'utf8'));
     return { privateKey: crypto.createPrivateKey(pem.privateKey),

@@ -13,7 +13,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, ngrok-skip-browser-warning');
+  // x-device-id is how a caller says which phone it is. Without it here, any browser-based client
+  // that needs to identify a device is blocked by preflight — the userscript and the Android app
+  // are unaffected (GM_xmlhttpRequest bypasses CORS, and the app is native).
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-device-id, x-admin-key, ngrok-skip-browser-warning');
+  res.setHeader('Access-Control-Expose-Headers', 'X-RateLimit-Limit, X-RateLimit-Remaining, Retry-After');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
