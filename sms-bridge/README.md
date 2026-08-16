@@ -20,6 +20,7 @@ The browser extension (or the Tampermonkey script on SOS POS) sends a message to
 | Folder | What it is |
 |--------|-----------|
 | `sospos-tools/` | Node.js/Express backend with a plugin system |
+| `sospos-tools/public/` | Web client — the messenger UI, served by the backend itself |
 | `sms-extension/` | Chrome/Chromium extension |
 | `SosPosMessenger/` | Android app (Kotlin) |
 
@@ -88,17 +89,58 @@ DB_DIR=./data npm start          # DB_DIR is where the database and keypair live
 # 2. Run the tests (optional, but they document the guarantees)
 npm test
 
-# 3. Install the browser script
-#    https://raw.githubusercontent.com/THVjQ/sos-sms-sender/main/sos-sms-sender.user.js
-#    Open SOS POS → 💬 → ⚙️ Bridge Settings → server URL → create an account.
-#    The first account on a fresh server becomes the administrator.
+# 3. Open http://localhost:4000/ and create an account
+#    The first account on a fresh server becomes the administrator; every later
+#    signup waits for that administrator to approve it.
 
 # 4. Pair the phone
-#    💬 → 🔗 Pair Device → Generate, then enter the URL and code on the phone.
+#    Devices → Pair a phone → enter the code in the app.
 #    The phone needs no API key — pairing issues it one.
+
+# 5. Optional: the Tampermonkey script, to send from inside SOS POS
+#    https://raw.githubusercontent.com/THVjQ/sos-sms-sender/main/sos-sms-sender.user.js
+#    SOS POS → 💬 → ⚙️ Bridge Settings → server URL → sign in.
 ```
 
 For a container deployment see [`sms-bridge/docker-compose.truenas.yml`](docker-compose.truenas.yml) and its `.env.example`. Upgrading is `docker compose pull && docker compose up -d` — a plain restart reuses the cached image and silently keeps running the old build.
+
+---
+
+## Web client
+
+Open the server's own URL in a browser — `http://localhost:4000/`, or whatever host it is published
+on — and you get a full messenger: sign-in, conversation list, threads with bubbles, device pairing,
+settings and the admin approval queue. It is styled to match the NexLink Android app (same palette,
+radii and avatar colours) so the two read as one product.
+
+There is nothing to install or configure. It is static files served by the same Express app that
+owns the API, so the browser talks to it same-origin: no CORS preflight on every call and no server
+URL for anyone to paste in.
+
+It is a **first-class client, not a viewer** — it holds its own keypair and does its own crypto:
+
+- **Outbound is sealed in the browser.** The message is encrypted to the target phone's public key
+  before it leaves the page, so the server relays ciphertext it cannot open. (`POST /send` also
+  accepts plaintext and will encrypt server-side — the web client deliberately does not use that.)
+- **Inbound is decrypted in the browser.** On first sign-in it generates a P-256 keypair and
+  registers the public half via `POST /client-key`; the phone then includes an envelope for it in
+  every reply. The private key is generated **non-extractable** and stored as an opaque CryptoKey
+  handle in IndexedDB — it can decrypt, but no code can read it back out, including the page itself.
+- **Sent messages are mirrored locally.** `GET /history` returns status but no body, by design: the
+  text was encrypted to the *phone's* key and nothing else can read it back. The browser therefore
+  keeps its own plaintext copy of what it sent, in IndexedDB, scoped per account. Clearing site data
+  loses that copy and the identity key with it.
+
+Consequences worth knowing before you rely on it:
+
+- Each browser profile is a separate registered client, and the phone encrypts one envelope per
+  registered key. Prune stale ones in **Settings → Encryption**.
+- Replies that arrived *before* a browser registered its key cannot be opened by it, and say so in
+  the thread rather than showing blank.
+- Sign-out makes the browser forget its key and its local copies. The API key it was issued is
+  **not** revoked server-side — there is no self-revoke route — so treat a lost laptop as a reason to
+  revoke that key from the admin panel.
+- The session is an ordinary API key in `localStorage`, because the server has no cookie session.
 
 ---
 
