@@ -17,7 +17,7 @@
 const Store = (() => {
   'use strict';
 
-  const DB_NAME = 'sos-messenger';
+  const DB_NAME = 'nexlink';
   const VERSION = 1;
   let dbPromise = null;
 

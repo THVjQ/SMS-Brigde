@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#000000">
-<title>SOS Messenger</title>
+<title>NexLink</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="css/style.css">
@@ -32,15 +32,17 @@
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
   <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m11 12 9-9 2 2-2 2 2 2-3 3-2-2-2 2"/></symbol>
-  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <!-- The NexLink "N", traced from the app's ic_launcher_foreground.xml so the web client and the
+       phone carry the same mark. Filled, not stroked — see .brandmark/.rail__brand in the CSS. -->
+  <symbol id="i-nexlink" viewBox="0 0 108 108"><path d="M30,28 L46,28 L62,72 L62,28 L78,28 L78,80 L62,80 L46,36 L46,80 L30,80 Z"/></symbol>
 </svg>
 
 <!-- ═══ Sign-in ══════════════════════════════════════════════════════════════ -->
 <div id="authScreen" class="auth" hidden>
   <div class="auth__card">
     <div class="auth__brand">
-      <div class="brandmark"><svg><use href="#i-link"/></svg></div>
-      <h1>SOS Messenger</h1>
+      <div class="brandmark"><svg><use href="#i-nexlink"/></svg></div>
+      <h1>NexLink</h1>
       <p class="auth__tagline">End-to-end encrypted SMS bridge</p>
     </div>
 
@@ -91,7 +93,7 @@
 
   <!-- Desktop rail -->
   <nav class="rail">
-    <div class="rail__brand"><svg><use href="#i-link"/></svg></div>
+    <div class="rail__brand"><svg><use href="#i-nexlink"/></svg></div>
     <button class="rail__btn is-active" data-nav="messages"><svg><use href="#i-message"/></svg><span>Messages</span><i class="rail__badge" id="railBadge" hidden></i></button>
     <button class="rail__btn" data-nav="devices"><svg><use href="#i-phone"/></svg><span>Devices</span></button>
     <button class="rail__btn" data-nav="settings"><svg><use href="#i-settings"/></svg><span>Settings</span></button>

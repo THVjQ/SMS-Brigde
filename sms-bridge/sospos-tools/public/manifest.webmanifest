@@ -1,6 +1,6 @@
 {
-  "name": "SOS Messenger",
-  "short_name": "SOS Msg",
+  "name": "NexLink",
+  "short_name": "NexLink",
   "description": "End-to-end encrypted SMS bridge — web client",
   "start_url": "/",
   "scope": "/",

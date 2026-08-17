@@ -106,12 +106,13 @@ For a container deployment see [`sms-bridge/docker-compose.truenas.yml`](docker-
 
 ---
 
-## Web client
+## Web client — NexLink
 
 Open the server's own URL in a browser — `http://localhost:4000/`, or whatever host it is published
 on — and you get a full messenger: sign-in, conversation list, threads with bubbles, device pairing,
-settings and the admin approval queue. It is styled to match the NexLink Android app (same palette,
-radii and avatar colours) so the two read as one product.
+settings and the admin approval queue. It carries the **NexLink** name and mark (the "N" is traced
+from the app's own `ic_launcher_foreground.xml`) and reuses its palette, radii and avatar colours,
+so the browser and the phone read as one product.
 
 There is nothing to install or configure. It is static files served by the same Express app that
 owns the API, so the browser talks to it same-origin: no CORS preflight on every call and no server

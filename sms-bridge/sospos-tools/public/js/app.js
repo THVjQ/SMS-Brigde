@@ -153,7 +153,7 @@
 
   function applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem('sosmsg.theme', theme);
+    localStorage.setItem('nexlink.theme', theme);
     const dark = theme === 'dark' ||
       (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -635,7 +635,7 @@
       wrap.innerHTML = `<div class="empty">
         <svg class="empty__icon"><use href="#i-phone"/></svg>
         <p>No phone paired</p>
-        <span>Pair the SOS Messenger app on a phone and it will send the SMS this server queues.</span>
+        <span>Pair the NexLink app on a phone and it will send the SMS this server queues.</span>
       </div>`;
       return;
     }
@@ -679,9 +679,9 @@
       </div>
       <p class="sectiontitle">On the phone</p>
       <ol class="steps">
-        <li>Open <strong>SOS Messenger</strong>.</li>
-        <li>Go to <strong>Settings → Pair with server</strong>.</li>
-        <li>Enter this code before it expires.</li>
+        <li>Open <strong>NexLink</strong>.</li>
+        <li>Go to <strong>Settings → Computer Bridge</strong>.</li>
+        <li>Work through the setup: accept the notice, enter this server's URL, then this code.</li>
       </ol>
       <p class="card__note">The phone leaves pairing with its own API key, scoped to this account. Pairing again replaces the previous key, so a phone that was wiped or handed on stops working.</p>`;
 
@@ -708,7 +708,7 @@
   async function renderSettings() {
     const s = Api.get();
     const user = (s && s.user) || {};
-    const theme = localStorage.getItem('sosmsg.theme') || 'system';
+    const theme = localStorage.getItem('nexlink.theme') || 'system';
 
     $('#settingsBody').innerHTML = `
       <div class="card">
@@ -1025,7 +1025,7 @@
   }
 
   async function boot() {
-    applyTheme(localStorage.getItem('sosmsg.theme') || 'system');
+    applyTheme(localStorage.getItem('nexlink.theme') || 'system');
     wireAuth();
     wireShell();
     Api.onSignedOut(leaveApp);

@@ -11,7 +11,7 @@ const Api = (() => {
   'use strict';
 
   const BASE       = '/api/tools/sms-bridge';
-  const SESSION_KEY = 'sosmsg.session';
+  const SESSION_KEY = 'nexlink.session';
 
   let session = null;
   try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { session = null; }

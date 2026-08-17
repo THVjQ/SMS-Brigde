@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   SOS Messenger — web client
+   NexLink — web client
    Palette and shapes are lifted from the NexLink Android app so the two read as
    one product:
      values-night/colors.xml  → the dark tokens below (the app's real look)
@@ -201,7 +201,8 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
   color: #fff;
   box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 42%, transparent);
 }
-.brandmark svg { width: 32px; height: 32px; stroke-width: 2; }
+/* The N is a filled letterform, unlike every other glyph in the sprite, which is stroked. */
+.brandmark svg { width: 34px; height: 34px; fill: currentColor; stroke: none; }
 .auth__brand h1 { font-size: 23px; letter-spacing: -.02em; }
 .auth__tagline { margin: 5px 0 0; font-size: 13px; color: var(--muted); }
 
@@ -248,7 +249,9 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
   background: linear-gradient(150deg, var(--accent), var(--accent2));
   color: #fff;
 }
-.rail__brand svg { width: 23px; height: 23px; stroke-width: 2; }
+/* 29px, not 23: the letterform's diagonal is thin and goes sub-pixel below ~28px, at which point
+   the N reads as two bars. */
+.rail__brand svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
 .rail__btn {
   position: relative;
   width: 100%; padding: 9px 2px;
